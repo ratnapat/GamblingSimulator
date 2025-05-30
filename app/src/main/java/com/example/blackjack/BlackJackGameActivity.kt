@@ -1,30 +1,25 @@
 package com.example.blackjack
 
-import android.app.Activity
-import android.content.Intent
-import android.os.Build.VERSION_CODES.Q
 import android.os.Bundle
-import android.util.Log
+import android.os.Handler
+import android.os.Looper
+import android.view.View
+import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.ActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.blackjack.databinding.ActivityBlackjackGameBinding
-import com.example.blackjack.databinding.ActivityBlackjackStartBinding
-import kotlinx.coroutines.NonCancellable.start
-import kotlin.random.Random
 
 class BlackJackGameActivity : AppCompatActivity() {
-    private lateinit var binding : ActivityBlackjackGameBinding
+    private lateinit var binding: ActivityBlackjackGameBinding
     var dealer = Player(1000000, 0)
     var you = Player(1000, 0)
-    var deckToNumberDefault = HashMap<Int, Card>()
-    var deckToNumber = HashMap<Int, Card>()
     var deckDefault = mutableListOf<Card>()
     var deck = mutableListOf<Card>()
+    var currentBet: Int = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,142 +32,239 @@ class BlackJackGameActivity : AppCompatActivity() {
             insets
         }
 
-        deck.add(Card(2, "Clubs", "two_of_clubs.png" ))
-        deck.add(Card(2, "Diamonds", "two_of_diamonds.png" ))
-        deck.add(Card(2, "Hearts", "two_of_hearts.png" ))
-        deck.add(Card(2, "Spades", "two_of_spades.png" ))
-        deck.add(Card(3, "Clubs", "three_of_clubs.png" ))
-        deck.add(Card(3, "Diamonds", "three_of_diamonds.png" ))
-        deck.add(Card(3, "Hearts", "three_of_hearts.png" ))
-        deck.add(Card(3, "Spades", "three_of_spades.png" ))
-        deck.add(Card(4, "Clubs", "four_of_clubs.png" ))
-        deck.add(Card(4, "Diamonds", "four_of_diamonds.png" ))
-        deck.add(Card(4, "Hearts", "four_of_hearts.png" ))
-        deck.add(Card(4, "Spades", "four_of_spades.png" ))
-        deck.add(Card(5, "Clubs", "five_of_clubs.png" ))
-        deck.add(Card(5, "Diamonds", "five_of_diamonds.png" ))
-        deck.add(Card(5, "Hearts", "five_of_hearts.png" ))
-        deck.add(Card(5, "Spades", "five_of_spades.png" ))
-        deck.add(Card(6, "Clubs", "six_of_clubs.png" ))
-        deck.add(Card(6, "Diamonds", "six_of_diamonds.png" ))
-        deck.add(Card(6, "Hearts", "six_of_hearts.png" ))
-        deck.add(Card(6, "Spades", "six_of_spades.png" ))
-        deck.add(Card(7, "Clubs", "seven_of_clubs.png" ))
-        deck.add(Card(7, "Diamonds", "seven_of_diamonds.png" ))
-        deck.add(Card(7, "Hearts", "seven_of_hearts.png" ))
-        deck.add(Card(7, "Spades", "seven_of_spades.png" ))
-        deck.add(Card(8, "Clubs", "eight_of_clubs.png" ))
-        deck.add(Card(8, "Diamonds", "eight_of_diamonds.png" ))
-        deck.add(Card(8, "Hearts", "eight_of_hearts.png" ))
-        deck.add(Card(8, "Spades", "eight_of_spades.png" ))
-        deck.add(Card(9, "Clubs", "nine_of_clubs.png" ))
-        deck.add(Card(9, "Diamonds", "nine_of_diamonds.png" ))
-        deck.add(Card(9, "Hearts", "nine_of_hearts.png" ))
-        deck.add(Card(9, "Spades", "nine_of_spades.png" ))
-        deck.add(Card(10, "Clubs", "ten_of_clubs.png" ))
-        deck.add(Card(10, "Diamonds", "ten_of_diamonds.png" ))
-        deck.add(Card(10, "Hearts", "ten_of_hearts.png" ))
-        deck.add(Card(10, "Spades", "ten_of_spades.png" ))
-        deck.add(Card(10, "Clubs", "jack_of_clubs.png" ))
-        deck.add(Card(10, "Diamonds", "jack_of_diamonds.png" ))
-        deck.add(Card(10, "Hearts", "jack_of_hearts.png" ))
-        deck.add(Card(10, "Spades", "jack_of_spades.png" ))
-        deck.add(Card(10, "Clubs", "queen_of_clubs.png" ))
-        deck.add(Card(10, "Diamonds", "queen_of_diamonds.png" ))
-        deck.add(Card(10, "Hearts", "queen_of_hearts.png" ))
-        deck.add(Card(10, "Spades", "queen_of_spades.png" ))
-        deck.add(Card(10, "Clubs", "king_of_clubs.png" ))
-        deck.add(Card(10, "Diamonds", "king_of_diamonds.png" ))
-        deck.add(Card(10, "Hearts", "king_of_hearts.png" ))
-        deck.add(Card(10, "Spades", "king_of_spades.png" ))
-        deck.add(Card(1, "Clubs", "ace_of_clubs.png" ))
-        deck.add(Card(1, "Diamonds", "ace_of_diamonds.png" ))
-        deck.add(Card(1, "Hearts", "ace_of_hearts.png" ))
-        deck.add(Card(1, "Spades", "ace_of_spades.png" ))
+        binding.textViewGameMoney.text = "Money $${you.money}"
 
-        for (i in 0.. 51) {
-            deckToNumber[i] = deck[i]
+        binding.buttonGameSubmitBet.setOnClickListener {
+            val betInput = binding.textViewGameBetAmount.text.toString()
+            val betAmount = betInput.toIntOrNull()
+
+            if (betAmount == null || betAmount <= 0) {
+                showToast("Please enter a valid bet amount!")
+                return@setOnClickListener
+            }
+
+            if (betAmount > you.money) {
+                showToast("You don't have enough money for that bet!")
+                return@setOnClickListener
+            }
+
+            currentBet = betAmount
+            you.money -= betAmount
+            showToast("Bet placed: $currentBet")
+            updateUI()
+
+            initializeDeck()
+            startGame()
         }
-
-        deckDefault = deck
-        deckToNumberDefault = deckToNumber
-
-        startGame()
-    }
-
-    fun startGame() {
-        deck = deckDefault
-        deckToNumber = deckToNumberDefault
-
-        var num1 = Random.nextInt(0, deckToNumber.size)
-        dealer.value += deckToNumber[num1]!!.value
-        deckToNumber.remove(num1)
-        binding.textViewGameDealerValue.text = dealer.value.toString()
-        var num2 = Random.nextInt(0, deckToNumber.size)
-        you.value += deckToNumber[num2]!!.value
-        deckToNumber.remove(num2)
-
-        var num3 = Random.nextInt(0, deckToNumber.size)
-        you.value += deckToNumber[num3]!!.value
-        deckToNumber.remove(num3)
-        binding.textViewGamePlayerValue.text = you.value.toString()
 
         binding.buttonGameHit.setOnClickListener {
             hit()
         }
-
         binding.buttonGameStand.setOnClickListener {
             stand()
         }
-
-        binding.buttonGameReset.setOnClickListener{
-            dealer.value = 0
-            binding.textViewGameDealerValue.text = "0"
-            you.value = 0
-            binding.textViewGamePlayerValue.text = "0"
-            startGame()
+        binding.buttonGameReset.setOnClickListener {
+            resetGame()
         }
+    }
+
+    fun initializeDeck() {
+        val numbers = mapOf(
+            2 to "two", 3 to "three", 4 to "four", 5 to "five", 6 to "six",
+            7 to "seven", 8 to "eight", 9 to "nine", 10 to "ten"
+        )
+        val suits = listOf("clubs", "diamonds", "hearts", "spades")
+        deckDefault.clear()
+        for (suit in suits) {
+            for (value in 2..10) {
+                deckDefault.add(Card(value, suit, "${numbers[value]}_of_${suit}.png"))
+            }
+            deckDefault.add(Card(10, suit, "jack_of_${suit}.png"))
+            deckDefault.add(Card(10, suit, "queen_of_${suit}.png"))
+            deckDefault.add(Card(10, suit, "king_of_${suit}.png"))
+            deckDefault.add(Card(1, suit, "ace_of_${suit}.png"))
+        }
+    }
+
+    fun startGame() {
+        binding.layoutBettingControls.visibility = View.GONE
+
+        binding.buttonGameReset.visibility = View.VISIBLE
+        binding.buttonGameStand.visibility = View.VISIBLE
+        binding.buttonGameHit.visibility = View.VISIBLE
+        binding.layoutDealerCards.visibility = View.VISIBLE
+        binding.layoutPlayerCards.visibility = View.VISIBLE
+        binding.textViewGameDealer.visibility = View.VISIBLE
+        binding.textViewGameDealerValue.visibility = View.VISIBLE
+        binding.textViewGamePlayer.visibility = View.VISIBLE
+        binding.textViewGamePlayerValue.visibility = View.VISIBLE
+        binding.textViewGameMessage.visibility = View.VISIBLE
+
+        deck = deckDefault.toMutableList()
+        dealer.value = 0
+        you.value = 0
+
+        binding.layoutDealerCards.removeAllViews()
+        binding.layoutPlayerCards.removeAllViews()
+
+        updateUI()
+
+        val handler = Handler(Looper.getMainLooper())
+        val initialDeal = listOf(
+            Pair("dealer", drawCard()),
+            Pair("player", drawCard()),
+            Pair("player", drawCard())
+        )
+
+        var index = 0
+
+        fun dealNextCard() {
+            if (index < initialDeal.size) {
+                val (who, card) = initialDeal[index]
+                if (who == "dealer") {
+                    dealer.value += card.value
+                    addCardImage(binding.layoutDealerCards, card.image)
+                } else {
+                    you.value += card.value
+                    addCardImage(binding.layoutPlayerCards, card.image)
+                }
+                updateUI()
+                index++
+                handler.postDelayed({ dealNextCard() }, 750)
+            }
+        }
+        dealNextCard()
+    }
+
+    private fun drawCard(): Card {
+        val card = deck.random()
+        deck.remove(card)
+        return card
     }
 
     fun hit() {
-        var num1 = Random.nextInt(0, deckToNumber.size)
-        you.value += deckToNumber[num1]!!.value
-        deckToNumber.remove(num1)
-        if (you.value > 21) {
-            gameOver()
-        }
-        binding.textViewGamePlayerValue.text = you.value.toString()
+        val handler = Handler(Looper.getMainLooper())
+        handler.postDelayed({
+            val card = drawCard()
+            you.value += card.value
+            addCardImage(binding.layoutPlayerCards, card.image)
+            updateUI()
+
+            if (you.value > 21) {
+                showToast("YOU HAVE BUSTED")
+                endGame()
+            }
+        }, 750)
     }
 
     fun stand() {
-        if (dealer.value > 16) {
-            gameOver()
+        val handler = Handler(Looper.getMainLooper())
+        fun dealerTurn() {
+            if (dealer.value <= 16) {
+                val card = drawCard()
+                dealer.value += card.value
+                addCardImage(binding.layoutDealerCards, card.image)
+                updateUI()
+
+                handler.postDelayed({ dealerTurn() }, 750)
+            } else {
+                checkWinner()
+            }
         }
-        while(dealer.value <= 16) {
-            var num1 = Random.nextInt(0, deckToNumber.size)
-            dealer.value += deckToNumber[num1]!!.value
-            deckToNumber.remove(num1)
-            binding.textViewGameDealerValue.text = dealer.value.toString()
-            stand()
-        }
+        dealerTurn()
     }
 
-    fun gameOver() {
-        if (you.value > 21) {
-            Toast.makeText(this, "YOU BUSTED", Toast.LENGTH_LONG).show()
+    fun addCardImage(layout: LinearLayout, imageName: String) {
+        val imageView = ImageView(this)
+        val resId = resources.getIdentifier(imageName.removeSuffix(".png"), "drawable", packageName)
+        if (resId != 0) {
+            imageView.setImageResource(resId)
         }
-        else if (dealer.value > 21) {
-            Toast.makeText(this, "YOU WON", Toast.LENGTH_LONG).show()
-        }
-        else if (dealer.value == you.value) {
-            Toast.makeText(this, "PUSH", Toast.LENGTH_LONG).show()
-        }
-        else if (dealer.value < you.value) {
-            Toast.makeText(this, "YOU WON", Toast.LENGTH_LONG).show()
-        }
-        else {
-            Toast.makeText(this, "YOU LOST", Toast.LENGTH_LONG).show()
-        }
+        val params = LinearLayout.LayoutParams(150, 220)
+        params.setMargins(8, 0, 8, 0)
+        imageView.layoutParams = params
+        imageView.alpha = 0f
+        layout.addView(imageView)
+        imageView.animate().alpha(1f).setDuration(300).start()
     }
 
+    fun checkWinner() {
+        val result = when {
+            you.value > 21 -> "YOU BUSTED. Lost $currentBet."
+            dealer.value > 21 -> {
+                you.money += currentBet * 2
+                "DEALER BUSTED. You win ${currentBet * 2}!"
+            }
+            dealer.value == you.value -> {
+                you.money += currentBet
+                "PUSH. Bet returned: $currentBet."
+            }
+            you.value > dealer.value -> {
+                you.money += currentBet * 2
+                "YOU WIN! You get ${currentBet * 2}!"
+            }
+            else -> "YOU LOSE. Lost $currentBet."
+        }
+
+        showToast(result)
+        endGame()
+    }
+
+    fun endGame() {
+        currentBet = 0
+        updateUI()
+
+        // Show a message or keep the final card layout visible for 2 seconds
+        Handler(Looper.getMainLooper()).postDelayed({
+            // After the delay, switch back to betting screen
+            binding.layoutBettingControls.visibility = View.VISIBLE
+
+            binding.buttonGameReset.visibility = View.INVISIBLE
+            binding.buttonGameStand.visibility = View.INVISIBLE
+            binding.buttonGameHit.visibility = View.INVISIBLE
+            binding.layoutDealerCards.visibility = View.INVISIBLE
+            binding.layoutPlayerCards.visibility = View.INVISIBLE
+            binding.textViewGameDealer.visibility = View.INVISIBLE
+            binding.textViewGameDealerValue.visibility = View.INVISIBLE
+            binding.textViewGamePlayer.visibility = View.INVISIBLE
+            binding.textViewGamePlayerValue.visibility = View.INVISIBLE
+            binding.textViewGameMessage.visibility = View.INVISIBLE
+
+            // Optionally: clear the card views for next round
+            binding.layoutDealerCards.removeAllViews()
+            binding.layoutPlayerCards.removeAllViews()
+        }, 2000) // 2000 milliseconds = 2 seconds
+    }
+
+    fun resetGame() {
+        currentBet = 0
+        you.value = 0
+        dealer.value = 0
+        updateUI()
+        binding.layoutDealerCards.removeAllViews()
+        binding.layoutPlayerCards.removeAllViews()
+
+        binding.layoutBettingControls.visibility = View.VISIBLE
+
+        binding.buttonGameReset.visibility = View.INVISIBLE
+        binding.buttonGameStand.visibility = View.INVISIBLE
+        binding.buttonGameHit.visibility = View.INVISIBLE
+        binding.layoutDealerCards.visibility = View.INVISIBLE
+        binding.layoutPlayerCards.visibility = View.INVISIBLE
+        binding.textViewGameDealer.visibility = View.INVISIBLE
+        binding.textViewGameDealerValue.visibility = View.INVISIBLE
+        binding.textViewGamePlayer.visibility = View.INVISIBLE
+        binding.textViewGamePlayerValue.visibility = View.INVISIBLE
+        binding.textViewGameMessage.visibility = View.INVISIBLE
+    }
+
+    fun updateUI() {
+        binding.textViewGamePlayerValue.text = you.value.toString()
+        binding.textViewGameDealerValue.text = dealer.value.toString()
+        binding.textViewGameMoney.text = "Money: $${you.money}"
+    }
+
+    fun showToast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+    }
 }
