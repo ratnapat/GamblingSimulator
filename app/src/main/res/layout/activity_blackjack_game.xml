@@ -163,7 +163,7 @@
                 android:layout_width="match_parent"
                 android:textColor="@color/white"
                 android:layout_height="wrap_content"
-                android:hint="Enter your bet in integer amount" />
+                android:hint="Enter Integer Bet Amount" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <Button

@@ -23,6 +23,7 @@
         </activity>
         <activity android:name=".BlackjackGameActivity"/>
         <activity android:name=".SlotsGameActivity"/>
+        <activity android:name=".RouletteGameActivity"/>
     </application>
 
 </manifest>

@@ -33,5 +33,10 @@ class SimulatorStartActivity : AppCompatActivity() {
             val gameIntent = Intent(currentActivity, SlotsGameActivity::class.java)
             currentActivity.startActivity(gameIntent)
         }
+        binding.buttonStartRoulette.setOnClickListener {
+            val currentActivity = this@SimulatorStartActivity
+            val gameIntent = Intent(currentActivity, RouletteGameActivity::class.java)
+            currentActivity.startActivity(gameIntent)
+        }
     }
 }
