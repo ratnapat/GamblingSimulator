@@ -1,4 +1,4 @@
-package com.example.blackjack
+package com.example.gamblingsimulator
 
 data class Card(
     var value : Int,

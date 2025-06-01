@@ -1,8 +1,12 @@
-package com.example.blackjack
+package com.example.gamblingsimulator
 
+import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -11,9 +15,9 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import com.example.blackjack.databinding.ActivityBlackjackGameBinding
+import com.example.gamblingsimulator.databinding.ActivityBlackjackGameBinding
 
-class BlackJackGameActivity : AppCompatActivity() {
+class BlackjackGameActivity : AppCompatActivity() {
     private lateinit var binding: ActivityBlackjackGameBinding
     var dealer = Player(1000000, 0)
     var you = Player(1000, 0)
@@ -32,7 +36,7 @@ class BlackJackGameActivity : AppCompatActivity() {
             insets
         }
 
-        binding.textViewGameMoney.text = "Money $${you.money}"
+        binding.textViewGameMoney.text = "Money: $${you.money}"
 
         binding.buttonGameSubmitBet.setOnClickListener {
             val betInput = binding.textViewGameBetAmount.text.toString()
@@ -266,5 +270,24 @@ class BlackJackGameActivity : AppCompatActivity() {
 
     fun showToast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        val inflater: MenuInflater = menuInflater
+        inflater.inflate(R.menu.simulator_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        // Handle item selection.
+        return when (item.itemId) {
+            R.id.menu_simulator_return -> {
+                val currentActivity = this
+                val gameIntent = Intent(currentActivity, SimulatorStartActivity::class.java)
+                currentActivity.startActivity(gameIntent)
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 }

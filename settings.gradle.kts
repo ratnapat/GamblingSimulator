@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "BlackJack"
+rootProject.name = "Gambling Simulator"
 include(":app")

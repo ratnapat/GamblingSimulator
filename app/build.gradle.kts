@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.blackjack"
+    namespace = "com.example.gamblingsimulator"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.blackjack"
+        applicationId = "com.example.gamblingsimulator"
         minSdk = 24
         targetSdk = 35
         versionCode = 1
